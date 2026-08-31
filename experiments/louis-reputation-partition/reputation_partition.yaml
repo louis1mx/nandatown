@@ -1,0 +1,55 @@
+# SPDX-License-Identifier: Apache-2.0
+# Reputation experiment: split reporting network with one central observer.
+name: reputation_partition
+description: "Two mixed trader communities separated by a network partition."
+
+tier: 1
+seed: 42
+
+agents:
+  count: 21
+  brain: state-machine
+  roles:
+    - name: honest
+      count: 16
+    - name: malicious
+      count: 4
+    - name: observer
+      count: 1
+
+layers:
+  transport: in_memory
+  comms: nest_native
+  identity: did_key
+  registry: in_memory
+  auth: jwt
+  trust: score_average
+  payments: prepaid_credits
+  coordination: contract_net
+  negotiation: alternating_offers
+  memory: blackboard
+  privacy: noop
+  datafacts: datafacts_v1
+
+task:
+  type: reputation
+  config:
+    rounds: 5
+    malicious_fraction: 0.2
+
+failures:
+  message_drop: 0.0
+  network_partition:
+    groups:
+      - [observer-0, honest-0, honest-1, honest-2, honest-3, honest-4, honest-5, honest-6, honest-7, malicious-0, malicious-1]
+      - [honest-8, honest-9, honest-10, honest-11, honest-12, honest-13, honest-14, honest-15, malicious-2, malicious-3]
+
+duration: "ticks: 10000"
+
+metrics:
+  - success_rate
+  - message_count
+  - agent_count
+
+output:
+  trace: ./traces/reputation_partition.jsonl
